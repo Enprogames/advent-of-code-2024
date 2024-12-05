@@ -12,6 +12,7 @@ use log::error;
 
 const DAY: &str = "01";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
+// const INPUT_FILE_BIG_BOY: &str = concatcp!("input/", "bigboy", DAY, ".txt");
 
 const TEST: &str = r#"
 3   4
@@ -95,6 +96,11 @@ fn main() -> Result<()> {
     let result = time_snippet!(part1(input_file)?);
     assert_eq!(2031679, result);
     println!("Result = {}", result);
+
+    // let result = time_snippet!(part1(
+    //     BufReader::new(File::open(INPUT_FILE_BIG_BOY)?)
+    // )?);
+    // println!("Result (big boy) = {}", result);
     //endregion
 
     //region Part 2
@@ -127,6 +133,10 @@ fn main() -> Result<()> {
     let result = time_snippet!(part2(input_file)?);
     assert_eq!(19678534, result);
     println!("Result = {}", result);
+
+    // let input_file_big_boy = BufReader::new(File::open(INPUT_FILE_BIG_BOY)?);
+    // let result = time_snippet!(part2(input_file_big_boy)?);
+    // println!("Result (big boy) = {}", result);
     //endregion
 
     Ok(())
