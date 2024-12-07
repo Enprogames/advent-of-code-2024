@@ -7,7 +7,7 @@ use code_timing_macros::time_snippet;
 use const_format::concatcp;
 use advent_of_code_2024::*;
 
-const DAY: &str = "03"; // TODO: Fill the day
+const DAY: &str = "03";
 const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 // TODO: Get big boy input
 const INPUT_FILE_BIG_BOY: &str = concatcp!("input/", "bigboy", DAY, ".txt");
@@ -147,19 +147,17 @@ fn do_dont_bounds(str: &str) -> impl Iterator<Item = (usize, usize)> + '_ {
 fn part2<R: BufRead>(reader: R) -> Result<usize> {
     let mut result: usize = 0;
 
-    for line in reader.lines() {
-        let line = line?;
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
+    // filter out any error lines and collect all lines into one long string
+    let flattened_input: String = reader
+        .lines()
+        .filter_map(|line| line.ok())
+        .collect();
 
-        result += do_dont_bounds(line)
-            .map(
-                |(start, end)| sum_all_mul_pairs_in_range(line, start, end)
-            )
-            .sum::<usize>();
-    }
+    result += do_dont_bounds(flattened_input.as_str())
+        .map(
+            |(start, end)| sum_all_mul_pairs_in_range(flattened_input.as_str(), start, end)
+        )
+        .sum::<usize>();
 
     Ok(result)
 }
@@ -381,6 +379,15 @@ mod tests {
     #[test]
     fn test_part2_nested_do_dont() {
         let input = "mul(2,3) don't() do() don't() mul(4,5) do() mul(6,7)";
+        assert_eq!(part2(input.as_bytes()).unwrap(), 48);
+    }
+
+    #[test]
+    fn test_part2_multiline() {
+        let input = r#"mul(2,3)
+        don't() do() don't()
+        mul(4,5) do()
+        mul(6,7)"#;
         assert_eq!(part2(input.as_bytes()).unwrap(), 48);
     }
 
