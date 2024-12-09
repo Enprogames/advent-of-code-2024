@@ -11,7 +11,7 @@ const INPUT_FILE: &str = concatcp!("input/", DAY, ".txt");
 // TODO: Get big boy input
 // const INPUT_FILE_BIG_BOY: &str = concatcp!("input/", "bigboy", DAY, ".txt");
 
-const TEST: &str = r#"\
+const TEST: &str = r#"
 
 "#; // TODO: Enter test input
 
