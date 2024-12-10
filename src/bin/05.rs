@@ -49,7 +49,7 @@ fn parse_file<R: BufRead>(mut reader: R) -> Result<(Vec<(usize, usize)>, Vec<Vec
 
     let mut parts = content.split("\n\n");
 
-    let part1 = parts.next()
+    let constraints = parts.next()
         .unwrap_or("")
         .lines()
         .map(str::trim)
@@ -68,7 +68,7 @@ fn parse_file<R: BufRead>(mut reader: R) -> Result<(Vec<(usize, usize)>, Vec<Vec
         })
         .collect::<Result<Vec<(usize, usize)>>>()?;
 
-    let part2 = parts.next()
+    let sequences = parts.next()
         .unwrap_or("")
         .lines()
         .map(str::trim)
@@ -80,7 +80,7 @@ fn parse_file<R: BufRead>(mut reader: R) -> Result<(Vec<(usize, usize)>, Vec<Vec
         })
         .collect::<Result<Vec<Vec<usize>>>>()?;
 
-    Ok((part1, part2))
+    Ok((constraints, sequences))
 }
 
 fn parse_adj_list(edge_tuples: Vec<(usize, usize)>) -> Result<Vec<Vec<usize>>> {
@@ -95,21 +95,105 @@ fn parse_adj_list(edge_tuples: Vec<(usize, usize)>) -> Result<Vec<Vec<usize>>> {
     Ok(adj_list)
 }
 
-fn verify
+fn find_max_in_all_sequences(sequences: &Vec<Vec<usize>>) -> usize {
+    *(sequences.iter().map(|seq| seq.iter().max().unwrap_or(&0)).max().unwrap_or(&0))
+}
+
+/// Pass by reference an array which can hold as many elements as the largest element in the ordering
+fn initialize_positional_array(ordering: &Vec<usize>, positional_array: &mut Vec<usize>) {
+    positional_array.fill(usize::MAX);
+    for (i, n) in ordering.iter().enumerate() {
+        positional_array[*n] = i;
+    }
+}
+
+fn verify_ordering(adj_list: &Vec<Vec<usize>>, ordering: &Vec<usize>, positional_array: &mut Vec<usize>) -> bool {
+    for n in ordering.iter() {
+        let n: usize = *n;
+        // Check each value against its constraints. All values in the adjacency list for this element must have a
+        // position further to the right in the ordering.
+        for &m in &adj_list[n as usize] {
+            // If any values are -1, they are not in the ordering and we can skip them
+            if positional_array[m] < positional_array[n] {
+                // If the position of the adjacent element is less than the current element, the ordering is invalid
+                return false;
+            }
+        }
+    }
+    true
+}
 
 fn part1<R: BufRead>(reader: R) -> Result<usize> {
-    // TODO: Solve Part 1 of the puzzle
-    let result: usize = 0;
+    let mut result: usize = 0;
 
-    let (part1, part2) = parse_file(reader)?;
+    let (constraints, sequences) = parse_file(reader)?;
 
-    let adj_list = parse_adj_list(part1);
+    // find the largest value among the sequences
+    let max_value: usize = find_max_in_all_sequences(&sequences);
+    let mut positional_array: Vec<usize> = vec![usize::MAX; max_value + 1];
+
+    let adj_list = parse_adj_list(constraints)?;
+
+    for seq in sequences {
+        initialize_positional_array(&seq, &mut positional_array);
+        if verify_ordering(&adj_list, &seq, &mut positional_array) {
+            result += seq[seq.len()/2] as usize;
+        }
+    }
     Ok(result)
 }
 
+fn swap_elements(ordering: &mut Vec<usize>, pos1: usize, pos2: usize) {
+    let temp = ordering[pos1];
+    ordering[pos1] = ordering[pos2];
+    ordering[pos2] = temp;
+}
+
+/// Ensure the sequence is invalid and reorder it to be valid
+fn verify_invalid_and_reorder(adj_list: &Vec<Vec<usize>>, ordering: &mut Vec<usize>, positional_array: &mut Vec<usize>) -> bool {
+    let mut is_invalid = false;
+
+    // By iterating through in reverse order, we will encounter out-of-order elements sooner
+    for i in (0..ordering.len()).rev() {
+        let n = ordering[i];
+        // Check each value against its constraints. All values in the adjacency list for this element must have a
+        // position further to the right in the ordering.
+        for &m in &adj_list[n] {
+            // If any values are -1, they are not in the ordering and we can skip them
+            if positional_array[m] < positional_array[n] {
+                // If the position of the adjacent element is less than the current element, the ordering is invalid
+                is_invalid = true;
+                // Swap the elements
+                swap_elements(ordering, positional_array[m], positional_array[n]);
+                // Update the positions in `positional_array` after swapping
+                let pos_m = positional_array[m];
+                let pos_n = positional_array[n];
+                positional_array[ordering[pos_m]] = pos_m;
+                positional_array[ordering[pos_n]] = pos_n;
+            }
+        }
+    }
+    is_invalid
+}
+
 fn part2<R: BufRead>(reader: R) -> Result<usize> {
-    // TODO: Solve Part 2 of the puzzle
-    Ok(0)
+    let mut result: usize = 0;
+
+    let (constraints, sequences) = parse_file(reader)?;
+
+    // find the largest value among the sequences
+    let max_value: usize = find_max_in_all_sequences(&sequences);
+    let mut positional_array: Vec<usize> = vec![usize::MAX; max_value + 1];
+
+    let adj_list = parse_adj_list(constraints)?;
+
+    for mut seq in sequences {
+        initialize_positional_array(&seq, &mut positional_array);
+        if verify_invalid_and_reorder(&adj_list, &mut seq, &mut positional_array) {
+            result += seq[seq.len()/2] as usize;
+        }
+    }
+    Ok(result)
 }
 
 fn main() -> Result<()> {
@@ -132,13 +216,13 @@ fn main() -> Result<()> {
     //endregion
 
     //region Part 2
-    // println!("\n=== Part 2 ===");
-    //
-    // assert_eq!(0, part2(BufReader::new(TEST.as_bytes()))?);
-    //
-    // let input_file = BufReader::new(File::open(INPUT_FILE)?);
-    // let result = time_snippet!(part2(input_file)?);
-    // println!("Result = {}", result);
+    println!("\n=== Part 2 ===");
+
+    assert_eq!(123, part2(BufReader::new(TEST.as_bytes()))?);
+
+    let input_file = BufReader::new(File::open(INPUT_FILE)?);
+    let result = time_snippet!(part2(input_file)?);
+    println!("Result = {}", result);
 
     // TODO: Uncomment for big boy result
     // let result = time_snippet!(part2(
