@@ -95,6 +95,7 @@ fn find_next_substring_in_range(
     None
 }
 
+/// Within a given range of a string, sum all mul(x, y) pairs
 fn sum_all_mul_pairs_in_range(str: &str, start: usize, end: usize) -> usize {
     let slice = &str[start..end];
 
@@ -114,7 +115,7 @@ fn sum_all_mul_pairs_in_range(str: &str, start: usize, end: usize) -> usize {
 }
 
 /// All ranges of values where mul will be enabled.
-/// So all ranges from the start to the first don't, and then repeatedly from the next do()
+/// So all ranges from the start to the first don't(), and then repeatedly from the next do()
 /// to the next don't().
 fn do_dont_bounds(str: &str) -> impl Iterator<Item = (usize, usize)> + '_ {
     let mut result: Vec<(usize, usize)> = Vec::new();
